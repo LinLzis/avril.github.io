@@ -1,0 +1,791 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Vue DevOps Release,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0">
+
+
+
+
+
+
+<meta name="description" content="平时的工作中，项目的持续集成和部署会有运维负责，随着DevOps的提倡，开发学习部署是大势所趋。得益于工作中小组的发展，所负责的项目都是通过公司运维搭建的gitlab和Rancher集成实现CI/CD，加快了上线速度。但是作为个人实践与学习，还是从基础开始吧，在此做个笔记。相关代码：https://github.com/LinLzis/simple-devops 1.持续集成和布署 技术栈 前台V">
+<meta name="keywords" content="Vue DevOps Release">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于JavaScript的简单DevOps">
+<meta property="og:url" content="http://www.avrils.cc/10/11/simple-release/index.html">
+<meta property="og:site_name" content="Avril的博客">
+<meta property="og:description" content="平时的工作中，项目的持续集成和部署会有运维负责，随着DevOps的提倡，开发学习部署是大势所趋。得益于工作中小组的发展，所负责的项目都是通过公司运维搭建的gitlab和Rancher集成实现CI/CD，加快了上线速度。但是作为个人实践与学习，还是从基础开始吧，在此做个笔记。相关代码：https://github.com/LinLzis/simple-devops 1.持续集成和布署 技术栈 前台V">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.avrils.cc/images/webhookscicd2.png">
+<meta property="og:image" content="http://www.avrils.cc/images/githubhook.png">
+<meta property="og:image" content="http://www.avrils.cc/images/dockercontainer.png">
+<meta property="og:updated_time" content="2019-10-11T11:28:26.451Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于JavaScript的简单DevOps">
+<meta name="twitter:description" content="平时的工作中，项目的持续集成和部署会有运维负责，随着DevOps的提倡，开发学习部署是大势所趋。得益于工作中小组的发展，所负责的项目都是通过公司运维搭建的gitlab和Rancher集成实现CI/CD，加快了上线速度。但是作为个人实践与学习，还是从基础开始吧，在此做个笔记。相关代码：https://github.com/LinLzis/simple-devops 1.持续集成和布署 技术栈 前台V">
+<meta name="twitter:image" content="http://www.avrils.cc/images/webhookscicd2.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.avrils.cc/10/11/simple-release/">
+
+
+
+
+
+  <title> 基于JavaScript的简单DevOps | Avril的博客 </title>
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Avril的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">伪文艺程序媛，动静皆宜</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.avrils.cc/10/11/simple-release/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Avril Li">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Avril的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                基于JavaScript的简单DevOps
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-11T19:03:49+08:00">
+                2019-10-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/DevOps/" itemprop="url" rel="index">
+                    <span itemprop="name">DevOps</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>平时的工作中，项目的持续集成和部署会有运维负责，随着DevOps的提倡，开发学习部署是大势所趋。得益于工作中小组的发展，所负责的项目都是通过公司运维搭建的gitlab和Rancher集成实现CI/CD，加快了上线速度。但是作为个人实践与学习，还是从基础开始吧，在此做个笔记。<br>相关代码：<a href="https://github.com/LinLzis/simple-devops" target="_blank" rel="noopener">https://github.com/LinLzis/simple-devops</a></p>
+<h2 id="1-持续集成和布署"><a href="#1-持续集成和布署" class="headerlink" title="1.持续集成和布署"></a>1.持续集成和布署</h2><ul>
+<li>技术栈 前台Vue.js,后台Node.js</li>
+<li>服务器 前台Nginx,后台Node.js</li>
+</ul>
+<p>如图：开发人员提交代码到Git服务器后，触发Webhook通知CI  Server到Git仓库pull最新的代码进行自动化构建、测试，然后CD Server自动让不同环境的Docker到构建好的镜像服务器中拉取对应的镜像进行部署。</p>
+<p><img src="/images/webhookscicd2.png" alt="webhookscicd2"></p>
+<h2 id="2-编写后端服务"><a href="#2-编写后端服务" class="headerlink" title="2.编写后端服务"></a>2.编写后端服务</h2><h3 id="2-1-package-json"><a href="#2-1-package-json" class="headerlink" title="2.1 package.json"></a>2.1 package.json</h3><p>/usr/projects/vue-back/package.json<br><figure class="highlight diff"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  "name": "vue-back",</span><br><span class="line">  "version": "0.0.0",</span><br><span class="line">  "private": true,</span><br><span class="line">  "scripts": &#123;</span><br><span class="line"><span class="addition">+    "start": "node ./server.js "</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="2-2-server-js"><a href="#2-2-server-js" class="headerlink" title="2.2 server.js"></a>2.2 server.js</h3><p>/usr/projects/vue-back/server.js<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> http = <span class="built_in">require</span>(<span class="string">'http'</span>);</span><br><span class="line"><span class="keyword">let</span> users = [</span><br><span class="line">    &#123;<span class="attr">id</span>:<span class="number">100</span>,<span class="attr">name</span>:<span class="string">'user1'</span>&#125;,</span><br><span class="line">    &#123;<span class="attr">id</span>:<span class="number">101</span>,<span class="attr">name</span>:<span class="string">'user2'</span>&#125;,</span><br><span class="line">    &#123;<span class="attr">id</span>:<span class="number">1002</span>,<span class="attr">name</span>:<span class="string">'user3'</span>&#125;</span><br><span class="line">]</span><br><span class="line"><span class="keyword">let</span> server = http.createServer(<span class="function"><span class="keyword">function</span>(<span class="params">req,res</span>)</span>&#123;</span><br><span class="line">  res.setHeader(<span class="string">'Access-Control-Allow-Origin'</span>,<span class="string">'*'</span>);</span><br><span class="line">  <span class="keyword">if</span>(req.url === <span class="string">'/api/users'</span>)&#123;</span><br><span class="line">      res.json(users);</span><br><span class="line">  &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">      res.send(<span class="string">'API Not Found'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line">server.listen(<span class="number">3000</span>,()=&gt;&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Server Run Port: 3000'</span>)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="2-3-gitignore"><a href="#2-3-gitignore" class="headerlink" title="2.3 .gitignore"></a>2.3 .gitignore</h3><p>/usr/projects/vue-back/.gitignore<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">lib</span><br><span class="line">package-lock.json</span><br></pre></td></tr></table></figure></p>
+<h2 id="3-前端项目"><a href="#3-前端项目" class="headerlink" title="3.前端项目"></a>3.前端项目</h2><h3 id="3-1-安装脚手架生成项目"><a href="#3-1-安装脚手架生成项目" class="headerlink" title="3.1 安装脚手架生成项目"></a>3.1 安装脚手架生成项目</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cnpm i @vue/cli -g</span><br><span class="line">vue create vue-front</span><br><span class="line">cd vue-front</span><br><span class="line">cnpm i axios -S</span><br></pre></td></tr></table></figure>
+<h3 id="3-2-App-vue"><a href="#3-2-App-vue" class="headerlink" title="3.2 App.vue"></a>3.2 App.vue</h3><p>/usr/projects/vue-front/src/App.vue<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">template</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">ul</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span> <span class="attr">v-for</span>=<span class="string">"(user) in users"</span> <span class="attr">:key</span>=<span class="string">"user.id"</span>&gt;</span></span><br><span class="line">      &#123;&#123;user.id&#125;&#125;:&#123;&#123;user.name&#125;&#125;</span><br><span class="line">    <span class="tag">&lt;/<span class="name">li</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">ul</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">template</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="javascript"><span class="keyword">import</span> axios <span class="keyword">from</span> <span class="string">'axios'</span>;</span></span><br><span class="line"><span class="javascript"><span class="keyword">export</span> <span class="keyword">default</span> &#123;</span></span><br><span class="line"><span class="javascript">  name: <span class="string">'app'</span>,</span></span><br><span class="line"><span class="undefined">  data()&#123;</span></span><br><span class="line"><span class="javascript">    <span class="keyword">return</span> &#123;</span></span><br><span class="line"><span class="undefined">      users:[]</span></span><br><span class="line"><span class="undefined">    &#125;</span></span><br><span class="line"><span class="undefined">  &#125;,</span></span><br><span class="line"><span class="undefined">  mounted()&#123;</span></span><br><span class="line"><span class="javascript">    axios.get(<span class="string">'http://localhost:3000/api/users'</span>).then(<span class="function"><span class="params">response</span>=&gt;</span>&#123;</span></span><br><span class="line"><span class="javascript">      <span class="keyword">this</span>.users = response.data;</span></span><br><span class="line"><span class="undefined">    &#125;);</span></span><br><span class="line"><span class="undefined">  &#125;</span></span><br><span class="line"><span class="undefined">&#125;</span></span><br><span class="line"><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">style</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="undefined"></span><span class="tag">&lt;/<span class="name">style</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="4-CI-CD服务器"><a href="#4-CI-CD服务器" class="headerlink" title="4. CI/CD服务器"></a>4. CI/CD服务器</h2><ul>
+<li><a href="https://developer.github.com/webhooks/" target="_blank" rel="noopener">webhooks文档</a></li>
+<li><a href="https://developer.github.com/v3/activity/events/types/#pushevent" target="_blank" rel="noopener">pushevent</a></li>
+</ul>
+<p><img src="/images/githubhook.png" alt="githubhook"></p>
+<h3 id="4-1-生成项目"><a href="#4-1-生成项目" class="headerlink" title="4.1 生成项目"></a>4.1 生成项目</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir vue-webhook</span><br><span class="line">cd vue-webhook</span><br><span class="line">cnpm init -y</span><br><span class="line">cnpm i nodemailer -S</span><br></pre></td></tr></table></figure>
+<h3 id="4-2-webhook-js"><a href="#4-2-webhook-js" class="headerlink" title="4.2 webhook.js"></a>4.2 webhook.js</h3><p>/usr/projects/vue-webhook/webhook.js<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> http = <span class="built_in">require</span>(<span class="string">'http'</span>);</span><br><span class="line"><span class="keyword">let</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"><span class="keyword">let</span> &#123;spawn&#125; = <span class="built_in">require</span>(<span class="string">'child_process'</span>);</span><br><span class="line"><span class="keyword">let</span> SECRET= <span class="string">'123456'</span>;</span><br><span class="line"><span class="keyword">let</span> sendMail = <span class="built_in">require</span>(<span class="string">'./sendMail'</span>);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">sign</span>(<span class="params">body</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">`sha1=`</span>+crypto.createHmac(<span class="string">'sha1'</span>,SECRET).update(body).digest(<span class="string">'hex'</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> server = http.createServer(<span class="function"><span class="keyword">function</span>(<span class="params">req,res</span>)</span>&#123;</span><br><span class="line">   <span class="built_in">console</span>.log(req.method,req.url);</span><br><span class="line">   <span class="keyword">if</span>(req.method == <span class="string">'POST'</span> &amp;&amp; req.url == <span class="string">'/webhook'</span>)&#123;</span><br><span class="line">       <span class="keyword">let</span> buffers = [];</span><br><span class="line">       req.on(<span class="string">'data'</span>,<span class="function"><span class="keyword">function</span>(<span class="params">buffer</span>)</span>&#123;</span><br><span class="line">           buffers.push(buffer);</span><br><span class="line">       &#125;);</span><br><span class="line">       req.on(<span class="string">'end'</span>,<span class="function"><span class="keyword">function</span>(<span class="params">buffer</span>)</span>&#123;</span><br><span class="line">           <span class="keyword">let</span> body = Buffer.concat(buffers);</span><br><span class="line">           <span class="keyword">let</span> event = req.headers[<span class="string">'x-github-event'</span>]; <span class="comment">//event=push</span></span><br><span class="line">           <span class="comment">//github请求来的时候，要传递请求体body,另外还会传一个signature过来，需要验证签名</span></span><br><span class="line">           <span class="keyword">let</span> signature = req.headers[<span class="string">'x-hub-signature'</span>];</span><br><span class="line">           <span class="keyword">if</span>(signature  !== sign(body))&#123;</span><br><span class="line">             <span class="keyword">return</span> res.send(<span class="string">'Not Allowed'</span>);</span><br><span class="line">           &#125;</span><br><span class="line">           res.setHeader(<span class="string">'Content-Type'</span>,<span class="string">'application/json'</span>);</span><br><span class="line">           res.send(<span class="built_in">JSON</span>.stringify(&#123;<span class="attr">ok</span>:<span class="literal">true</span>&#125;));</span><br><span class="line">           <span class="keyword">if</span>(event == <span class="string">'push'</span>)&#123;<span class="comment">//开始布署</span></span><br><span class="line">                <span class="keyword">let</span> payload = <span class="built_in">JSON</span>.parse(body);</span><br><span class="line">                <span class="keyword">let</span> child = spawn(<span class="string">'sh'</span>,[<span class="string">`./<span class="subst">$&#123;payload.repository.name&#125;</span>.sh`</span>]);</span><br><span class="line">                <span class="keyword">let</span> buffers = [];</span><br><span class="line">                child.stdout.on(<span class="string">'data'</span>,<span class="function"><span class="keyword">function</span>(<span class="params">buffer</span>)</span>&#123;</span><br><span class="line">                    buffers.push(buffer);</span><br><span class="line">                &#125;);</span><br><span class="line">                 child.stdout.on(<span class="string">'end'</span>,<span class="function"><span class="keyword">function</span>(<span class="params">buffer</span>)</span>&#123;</span><br><span class="line">                    <span class="keyword">let</span> logs = Buffer.concat(buffers).toString();</span><br><span class="line">                    sendMail(<span class="string">`</span></span><br><span class="line"><span class="string">                        &lt;h1&gt;部署日期: <span class="subst">$&#123;<span class="keyword">new</span> <span class="built_in">Date</span>()&#125;</span>&lt;/h1&gt;</span></span><br><span class="line"><span class="string">                        &lt;h2&gt;部署人: <span class="subst">$&#123;payload.pusher.name&#125;</span>&lt;/h2&gt;</span></span><br><span class="line"><span class="string">                        &lt;h2&gt;部署邮箱: <span class="subst">$&#123;payload.pusher.email&#125;</span>&lt;/h2&gt;</span></span><br><span class="line"><span class="string">                        &lt;h2&gt;提交信息: <span class="subst">$&#123;payload.head_commit&amp;&amp;payload.head_commit[<span class="string">'message'</span>]&#125;</span>&lt;/h2&gt;</span></span><br><span class="line"><span class="string">                        &lt;h2&gt;布署日志: <span class="subst">$&#123;logs.replace(<span class="string">"\r\n"</span>,<span class="string">'&lt;br/&gt;'</span>)&#125;</span>&lt;/h2&gt;</span></span><br><span class="line"><span class="string">                    `</span>);</span><br><span class="line">                &#125;);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;);</span><br><span class="line">      </span><br><span class="line">   &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">       res.send(<span class="string">'Not Found'</span>);</span><br><span class="line">   &#125;</span><br><span class="line">&#125;);</span><br><span class="line">server.listen(<span class="number">4000</span>,()=&gt;&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Webhook Run Port：4000'</span>)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-3-sendMail-js"><a href="#4-3-sendMail-js" class="headerlink" title="4.3 sendMail.js"></a>4.3 sendMail.js</h3><ul>
+<li><a href="https://nodemailer.com/smtp/well-known/" target="_blank" rel="noopener">nodemailer</a></li>
+</ul>
+<p>/usr/projects/vue-webhook/sendMail.js<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> nodemailer = <span class="built_in">require</span>(<span class="string">'nodemailer'</span>);</span><br><span class="line"><span class="keyword">let</span> transporter = nodemailer.createTransport(&#123;</span><br><span class="line">    <span class="comment">// host: 'smtp.ethereal.email',</span></span><br><span class="line">    service: <span class="string">'qq'</span>, <span class="comment">// 使用了内置传输发送邮件 查看支持列表：https://nodemailer.com/smtp/well-known/</span></span><br><span class="line">    port: <span class="number">465</span>, <span class="comment">// SMTP 端口</span></span><br><span class="line">    secureConnection: <span class="literal">true</span>, <span class="comment">// 使用了 SSL</span></span><br><span class="line">    auth: &#123;</span><br><span class="line">        user: <span class="string">'283023603@qq.com'</span>,</span><br><span class="line">        <span class="comment">// smtp授权码</span></span><br><span class="line">        pass: <span class="string">'zpdfteyhjfbpcaff'</span>,</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">sendMail</span>(<span class="params">message</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> mailOptions = &#123;</span><br><span class="line">        <span class="keyword">from</span>: <span class="string">'"Avril Li" &lt;283023603@qq.com&gt;'</span>, <span class="comment">// 发送地址</span></span><br><span class="line">        to: <span class="string">'283023603@qq.com'</span>, <span class="comment">// 接收者</span></span><br><span class="line">        subject: <span class="string">'部署通知'</span>, <span class="comment">// 主题 </span></span><br><span class="line">        html:message <span class="comment">// 内容主体</span></span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="comment">// send mail with defined transport object</span></span><br><span class="line">    transporter.sendMail(mailOptions, (error, info) =&gt; &#123;</span><br><span class="line">        <span class="keyword">if</span> (error) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">console</span>.log(error);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'Message sent: %s'</span>, info.messageId);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = sendMail;</span><br><span class="line"><span class="string">`</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="4-4-package-json"><a href="#4-4-package-json" class="headerlink" title="4.4 package.json"></a>4.4 package.json</h3><p>/usr/projects/vue-webhook/package.json</p>
+<figure class="highlight diff"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  "name": "vue-webhooks",</span><br><span class="line">  "version": "1.0.0",</span><br><span class="line">  "description": "",</span><br><span class="line">  "main": "index.js",</span><br><span class="line">  "scripts": &#123;</span><br><span class="line"><span class="addition">+    "start": "pm2 start ./webhook.js --watch --name='vue-webhook'",</span></span><br><span class="line"><span class="addition">+    "stop": "pm2 stop vue-webhook"</span></span><br><span class="line">  &#125;,</span><br><span class="line">  "keywords": [],</span><br><span class="line">  "author": "",</span><br><span class="line">  "license": "ISC",</span><br><span class="line">  "dependencies": &#123;</span><br><span class="line">    "nodemailer": "^6.3.0"</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="5-配置服务器"><a href="#5-配置服务器" class="headerlink" title="5. 配置服务器"></a>5. 配置服务器</h2><h3 id="5-1-更新系统"><a href="#5-1-更新系统" class="headerlink" title="5.1 更新系统"></a>5.1 更新系统</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">#升级所有包同时也升级软件和系统内核</span><br><span class="line">yum update </span><br><span class="line">#只升级所有包，不升级软件和系统内核</span><br><span class="line">yum upgrade</span><br></pre></td></tr></table></figure>
+<h3 id="5-2-docker是什么"><a href="#5-2-docker是什么" class="headerlink" title="5.2 docker是什么?"></a>5.2 docker是什么?</h3><ul>
+<li>Docker 属于 Linux 容器的一种封装，提供简单易用的容器使用接口。</li>
+<li>Docker 将应用程序与该程序的依赖，打包在一个文件里面。运行这个文件，就会生成一个虚拟容器。程序在这个虚拟容器里运行，就好像在真实的物理机上运行一样</li>
+</ul>
+<p><img src="/images/dockercontainer.png" alt="dockercontainer"></p>
+<h3 id="5-3-安装docker"><a href="#5-3-安装docker" class="headerlink" title="5.3 安装docker"></a>5.3 安装docker</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">yum install -y yum-utils   device-mapper-persistent-data   lvm2</span><br><span class="line">yum-config-manager \</span><br><span class="line">    --add-repo \</span><br><span class="line">    https:<span class="comment">//mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span></span><br><span class="line">yum install -y docker-ce docker-ce-cli containerd.io</span><br></pre></td></tr></table></figure>
+<h3 id="5-4-阿里云加速"><a href="#5-4-阿里云加速" class="headerlink" title="5.4 阿里云加速"></a>5.4 阿里云加速</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p /etc/docker</span><br><span class="line">tee /etc/docker/daemon.json &lt;&lt;-<span class="string">'EOF'</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">"registry-mirrors"</span>: [<span class="string">"https://fwvjnv59.mirror.aliyuncs.com"</span>]</span><br><span class="line">&#125;</span><br><span class="line">EOF</span><br><span class="line"># 重载所有修改过的配置文件</span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart docker</span><br></pre></td></tr></table></figure>
+<h3 id="5-5-生成公钥并添加github"><a href="#5-5-生成公钥并添加github" class="headerlink" title="5.5 生成公钥并添加github"></a>5.5 生成公钥并添加github</h3><ul>
+<li><a href="https://github.com/settings/keys" target="_blank" rel="noopener">https://github.com/settings/keys</a></li>
+</ul>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -t rsa -C <span class="string">"&lt;your.name&gt;@qq.com</span></span><br><span class="line"><span class="string">cat /root/.ssh/id_rsa.pub</span></span><br></pre></td></tr></table></figure>
+<h3 id="5-6-安装git"><a href="#5-6-安装git" class="headerlink" title="5.6 安装git"></a>5.6 安装git</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">yum install git -y</span><br><span class="line">git clone git@github.com:<span class="xml"><span class="tag">&lt;<span class="name">your.git.name</span>&gt;</span>/vue-front.git</span></span><br><span class="line">git clone git@github.com:&lt;your.git.name&gt;/vue-back.git</span><br><span class="line">git clone git@github.com:&lt;your.git.name&gt;/vue-webhook.git</span><br></pre></td></tr></table></figure>
+<p>~.gitconfig<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[alias]</span><br><span class="line">    a = add -A</span><br><span class="line">    c = commit -m<span class="string">"msg"</span></span><br><span class="line">    p = push origin master</span><br></pre></td></tr></table></figure></p>
+<h3 id="5-7-安装node和npm"><a href="#5-7-安装node和npm" class="headerlink" title="5.7 安装node和npm"></a>5.7 安装node和npm</h3><ul>
+<li><a href="https://github.com/nvm-sh/nvm" target="_blank" rel="noopener">NVM</a> Node.js多版本管理</li>
+<li><a href="https://www.npmjs.com/package/nrm" target="_blank" rel="noopener">NRM</a> NPM源的切换<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">wget -qO- https:<span class="comment">//raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash</span></span><br><span class="line">source /root/.bashrc</span><br><span class="line"># 安装最新的Node稳定版本</span><br><span class="line">nvm install stable</span><br><span class="line">npm i nrm -g</span><br><span class="line">nrm use taobao</span><br><span class="line">npm i pm2 -g</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="5-8-安装启动服务"><a href="#5-8-安装启动服务" class="headerlink" title="5.8 安装启动服务"></a>5.8 安装启动服务</h3><h4 id="5-8-1-vue-back"><a href="#5-8-1-vue-back" class="headerlink" title="5.8.1 vue-back"></a>5.8.1 vue-back</h4><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/projects/vue-back</span><br><span class="line">npm i </span><br><span class="line">npm run start</span><br><span class="line">curl http:<span class="comment">//localhost:3000</span></span><br></pre></td></tr></table></figure>
+<h4 id="5-8-2-vue-front"><a href="#5-8-2-vue-front" class="headerlink" title="5.8.2 vue-front"></a>5.8.2 vue-front</h4><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/projects/vue-front</span><br><span class="line">npm i </span><br><span class="line">npm run serve</span><br><span class="line">curl http:<span class="comment">//localhost:8080</span></span><br></pre></td></tr></table></figure>
+<h4 id="5-8-3-vue-webhook"><a href="#5-8-3-vue-webhook" class="headerlink" title="5.8.3 vue-webhook"></a>5.8.3 vue-webhook</h4><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/projects/vue-webhook</span><br><span class="line">npm i</span><br><span class="line">npm run start </span><br><span class="line">curl http:<span class="comment">//localhost:4000</span></span><br><span class="line">curl http:<span class="comment">//47.104.15.123:4000/webhook</span></span><br></pre></td></tr></table></figure>
+<h2 id="6-后台布署"><a href="#6-后台布署" class="headerlink" title="6. 后台布署"></a>6. 后台布署</h2><h3 id="6-1-vue-back-sh"><a href="#6-1-vue-back-sh" class="headerlink" title="6.1 vue-back.sh"></a>6.1 vue-back.sh</h3><p>/usr/projects/vue-webhook/vue-back.sh<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line">WORK_PATH=<span class="string">'/usr/projects/vue-back'</span></span><br><span class="line"><span class="built_in">cd</span> <span class="variable">$WORK_PATH</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"清理代码"</span></span><br><span class="line">git reset --hard origin/master</span><br><span class="line">git clean -f</span><br><span class="line"><span class="built_in">echo</span> <span class="string">"拉取最新代码"</span></span><br><span class="line">git pull origin master</span><br><span class="line"><span class="built_in">echo</span> <span class="string">"开始构建镜像"</span></span><br><span class="line">docker build -t vue-back .</span><br><span class="line"><span class="built_in">echo</span> <span class="string">"删除旧容器"</span></span><br><span class="line">docker stop vue-back-container</span><br><span class="line">docker rm vue-back-container</span><br><span class="line"><span class="built_in">echo</span> <span class="string">"启动新容器"</span></span><br><span class="line">docker container run -p 3000:3000 -d --name vue-back-container vue-back</span><br></pre></td></tr></table></figure></p>
+<h3 id="6-2-Dockerfile"><a href="#6-2-Dockerfile" class="headerlink" title="6.2 Dockerfile"></a>6.2 Dockerfile</h3><p>/usr/projects/vue-back/Dockerfile<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">FROM node</span><br><span class="line">LABEL name=&quot;vue-back&quot;</span><br><span class="line">LABEL version=&quot;1.0&quot;</span><br><span class="line">COPY . /app</span><br><span class="line">WORKDIR /app</span><br><span class="line">RUN npm install</span><br><span class="line">EXPOSE 3000</span><br><span class="line">CMD npm start</span><br></pre></td></tr></table></figure></p>
+<h3 id="6-3-dockerignore"><a href="#6-3-dockerignore" class="headerlink" title="6.3 .dockerignore"></a>6.3 .dockerignore</h3><p>/usr/projects/vue-back/.dockerignore<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">.git</span><br><span class="line">node_modules</span><br><span class="line">package-lock.json</span><br><span class="line">Dockerfile</span><br><span class="line">.dockerignore</span><br></pre></td></tr></table></figure></p>
+<h2 id="7-前台布署"><a href="#7-前台布署" class="headerlink" title="7. 前台布署"></a>7. 前台布署</h2><h3 id="7-1-vue-front-sh"><a href="#7-1-vue-front-sh" class="headerlink" title="7.1 vue-front.sh"></a>7.1 vue-front.sh</h3><p>/usr/projects/vue-webhook/vue-front.sh<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line">WORK_PATH=<span class="string">'/usr/projects/vue-front'</span></span><br><span class="line"><span class="built_in">cd</span> <span class="variable">$WORK_PATH</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">"清理代码"</span></span><br><span class="line">git reset --hard origin/master</span><br><span class="line">git clean -f</span><br><span class="line"><span class="built_in">echo</span> <span class="string">"拉取最新代码"</span></span><br><span class="line">git pull origin master</span><br><span class="line"><span class="built_in">echo</span> <span class="string">"打包最新代码"</span></span><br><span class="line">npm run build</span><br><span class="line"><span class="built_in">echo</span> <span class="string">"开始构建镜像"</span></span><br><span class="line">docker build -t vue-front .</span><br><span class="line"><span class="built_in">echo</span> <span class="string">"删除旧容器"</span></span><br><span class="line">docker stop vue-front-container</span><br><span class="line">docker rm vue-front-container</span><br><span class="line"><span class="built_in">echo</span> <span class="string">"启动新容器"</span></span><br><span class="line">docker container run -p 80:80 -d --name vue-front-container vue-front</span><br></pre></td></tr></table></figure></p>
+<h3 id="7-2-Dockerfile"><a href="#7-2-Dockerfile" class="headerlink" title="7.2 Dockerfile"></a>7.2 Dockerfile</h3><p>/usr/projects/vue-front/Dockerfile<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FROM nginx</span><br><span class="line">LABEL name=&quot;vue-front&quot;</span><br><span class="line">LABEL version=&quot;1.0&quot;</span><br><span class="line">COPY  ./dist/ /usr/share/nginx/html/</span><br><span class="line">COPY ./vue-front.conf /etc/nginx/conf.d/</span><br><span class="line">EXPOSE 80</span><br></pre></td></tr></table></figure></p>
+<h3 id="7-3-vue-front-conf"><a href="#7-3-vue-front-conf" class="headerlink" title="7.3 vue-front.conf"></a>7.3 vue-front.conf</h3><p>/usr/projects/vue-front/vue-front.conf<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen       80;</span><br><span class="line">    server_name  47.104.15.123;</span><br><span class="line">    location / &#123;</span><br><span class="line">        root   /usr/share/nginx/html;</span><br><span class="line">        index  index.html index.htm;</span><br><span class="line">        try_files $uri $uri/ /index.html;</span><br><span class="line">    &#125;</span><br><span class="line">    location /api &#123;</span><br><span class="line">      proxy_pass http://47.104.15.123:3000;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="7-4-dockerignore"><a href="#7-4-dockerignore" class="headerlink" title="7.4  .dockerignore"></a>7.4  .dockerignore</h3><p>/usr/projects/vue-front/.dockerignore<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">.git</span><br><span class="line">node_modules</span><br><span class="line">package-lock.json</span><br><span class="line">Dockerfile</span><br><span class="line">.dockerignore</span><br></pre></td></tr></table></figure></p>
+<h2 id="8-集成部署"><a href="#8-集成部署" class="headerlink" title="8. 集成部署"></a>8. 集成部署</h2><ul>
+<li>Compose 通过一个配置文件来管理多个Docker容器</li>
+<li>在配置文件中，所有的容器通过services来定义，然后使用docker-compose脚本来启动、停止和重启应用和应用中的服务以及所有依赖服务的容器</li>
+<li>最后，运行docker-compose up，Compose 将启动并运行整个应用程序 配置文件组成</li>
+</ul>
+<h3 id="8-1-docker-compose-yml"><a href="#8-1-docker-compose-yml" class="headerlink" title="8.1 docker-compose.yml"></a>8.1 docker-compose.yml</h3><p>/usr/projects/docker-compose.yml<br><figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">'2'</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line"><span class="attr"> api:</span></span><br><span class="line"><span class="attr">  build:</span></span><br><span class="line"><span class="attr">    context:</span> <span class="string">./vue-back</span></span><br><span class="line"><span class="attr">    dockerfile:</span> <span class="string">Dockerfile</span></span><br><span class="line"><span class="attr">  ports:</span></span><br><span class="line"><span class="bullet">    -</span> <span class="string">"3000:3000"</span></span><br><span class="line"><span class="attr"> web:</span></span><br><span class="line"><span class="attr">  build:</span></span><br><span class="line"><span class="attr">    context:</span> <span class="string">./vue-front</span></span><br><span class="line"><span class="attr">    dockerfile:</span> <span class="string">Dockerfile</span></span><br><span class="line"><span class="attr">  ports:</span></span><br><span class="line"><span class="bullet">    -</span> <span class="string">"80:80"</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="8-2-安装docker-compose"><a href="#8-2-安装docker-compose" class="headerlink" title="8.2 安装docker-compose"></a>8.2 安装docker-compose</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -L https:<span class="comment">//github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose</span></span><br><span class="line">chmod +x /usr/local/bin/docker-compose</span><br></pre></td></tr></table></figure>
+<h3 id="8-3-启动服务"><a href="#8-3-启动服务" class="headerlink" title="8.3 启动服务"></a>8.3 启动服务</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker-compose up</span><br><span class="line">docker-compuse up -d</span><br></pre></td></tr></table></figure>
+<h3 id="8-4-cicd-sh"><a href="#8-4-cicd-sh" class="headerlink" title="8.4 cicd.sh"></a>8.4 cicd.sh</h3><p>/usr/projects/vue-webhook/cicd.sh<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line">WORK_PATH=<span class="string">'/usr/projects/vue-back'</span></span><br><span class="line">cd $WORK_PATH</span><br><span class="line">echo <span class="string">"清理后台代码"</span></span><br><span class="line">git reset --hard origin/master</span><br><span class="line">git clean -f</span><br><span class="line">echo <span class="string">"拉取后台最新代码"</span></span><br><span class="line">git pull origin master</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">WORK_PATH=<span class="string">'/usr/projects/vue-front'</span></span><br><span class="line">cd $WORK_PATH</span><br><span class="line">echo <span class="string">"清理前台代码"</span></span><br><span class="line">git reset --hard origin/master</span><br><span class="line">git clean -f</span><br><span class="line">echo <span class="string">"拉取前台最新代码"</span></span><br><span class="line">git pull origin master</span><br><span class="line">echo <span class="string">"打包前台最新代码"</span></span><br><span class="line">npm run build</span><br><span class="line"></span><br><span class="line">cd /usr/projects</span><br><span class="line">echo <span class="string">"删除老资源"</span></span><br><span class="line">docker-compose down</span><br><span class="line">echo <span class="string">"重启所有服务"</span></span><br><span class="line">docker-compose up -d</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Vue-DevOps-Release/" rel="tag"># Vue DevOps Release</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/09/19/mini-vuex/" rel="next" title="Mini Vuex">
+                <i class="fa fa-chevron-left"></i> Mini Vuex
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="/images/logo.png" alt="Avril Li">
+          <p class="site-author-name" itemprop="name">Avril Li</p>
+           
+              <p class="site-description motion-element" itemprop="description">喜阅文，常笃学，善运动，乐言谈。擅长前端，偶尔研究用户体验，正致力于全栈开发。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-持续集成和布署"><span class="nav-number">1.</span> <span class="nav-text">1.持续集成和布署</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-编写后端服务"><span class="nav-number">2.</span> <span class="nav-text">2.编写后端服务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-package-json"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 package.json</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-server-js"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 server.js</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-gitignore"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 .gitignore</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-前端项目"><span class="nav-number">3.</span> <span class="nav-text">3.前端项目</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-安装脚手架生成项目"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 安装脚手架生成项目</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-App-vue"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 App.vue</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-CI-CD服务器"><span class="nav-number">4.</span> <span class="nav-text">4. CI/CD服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-生成项目"><span class="nav-number">4.1.</span> <span class="nav-text">4.1 生成项目</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-webhook-js"><span class="nav-number">4.2.</span> <span class="nav-text">4.2 webhook.js</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-sendMail-js"><span class="nav-number">4.3.</span> <span class="nav-text">4.3 sendMail.js</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-4-package-json"><span class="nav-number">4.4.</span> <span class="nav-text">4.4 package.json</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-配置服务器"><span class="nav-number">5.</span> <span class="nav-text">5. 配置服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#5-1-更新系统"><span class="nav-number">5.1.</span> <span class="nav-text">5.1 更新系统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-2-docker是什么"><span class="nav-number">5.2.</span> <span class="nav-text">5.2 docker是什么?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-3-安装docker"><span class="nav-number">5.3.</span> <span class="nav-text">5.3 安装docker</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-4-阿里云加速"><span class="nav-number">5.4.</span> <span class="nav-text">5.4 阿里云加速</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-5-生成公钥并添加github"><span class="nav-number">5.5.</span> <span class="nav-text">5.5 生成公钥并添加github</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-6-安装git"><span class="nav-number">5.6.</span> <span class="nav-text">5.6 安装git</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-7-安装node和npm"><span class="nav-number">5.7.</span> <span class="nav-text">5.7 安装node和npm</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-8-安装启动服务"><span class="nav-number">5.8.</span> <span class="nav-text">5.8 安装启动服务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#5-8-1-vue-back"><span class="nav-number">5.8.1.</span> <span class="nav-text">5.8.1 vue-back</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-8-2-vue-front"><span class="nav-number">5.8.2.</span> <span class="nav-text">5.8.2 vue-front</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-8-3-vue-webhook"><span class="nav-number">5.8.3.</span> <span class="nav-text">5.8.3 vue-webhook</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-后台布署"><span class="nav-number">6.</span> <span class="nav-text">6. 后台布署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#6-1-vue-back-sh"><span class="nav-number">6.1.</span> <span class="nav-text">6.1 vue-back.sh</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-2-Dockerfile"><span class="nav-number">6.2.</span> <span class="nav-text">6.2 Dockerfile</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-3-dockerignore"><span class="nav-number">6.3.</span> <span class="nav-text">6.3 .dockerignore</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-前台布署"><span class="nav-number">7.</span> <span class="nav-text">7. 前台布署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#7-1-vue-front-sh"><span class="nav-number">7.1.</span> <span class="nav-text">7.1 vue-front.sh</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-2-Dockerfile"><span class="nav-number">7.2.</span> <span class="nav-text">7.2 Dockerfile</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-3-vue-front-conf"><span class="nav-number">7.3.</span> <span class="nav-text">7.3 vue-front.conf</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-4-dockerignore"><span class="nav-number">7.4.</span> <span class="nav-text">7.4  .dockerignore</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-集成部署"><span class="nav-number">8.</span> <span class="nav-text">8. 集成部署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#8-1-docker-compose-yml"><span class="nav-number">8.1.</span> <span class="nav-text">8.1 docker-compose.yml</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-2-安装docker-compose"><span class="nav-number">8.2.</span> <span class="nav-text">8.2 安装docker-compose</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-3-启动服务"><span class="nav-number">8.3.</span> <span class="nav-text">8.3 启动服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-4-cicd-sh"><span class="nav-number">8.4.</span> <span class="nav-text">8.4 cicd.sh</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Avril Li</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
