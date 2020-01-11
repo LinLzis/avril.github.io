@@ -262,6 +262,308 @@
   
 
   <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.avrils.cc/01/11/vue3-0-principle/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Avril Li">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Avril的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/01/11/vue3-0-principle/" itemprop="url">
+                  Vue3.0和Vue2.0响应式原理分析与实现
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-11T13:44:03+08:00">
+                2020-01-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Vue/" itemprop="url" rel="index">
+                    <span itemprop="name">Vue</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>PS: 换个了电脑，墨迹了好久才有空重新搭环境，老早写了大半，一直拖着没发，emm… 终于发了。<br>Vue3.0终于公布了一波源码，掀起了一股大风，我个菜鸡也跟风记录一波，顺便把Vue2.0的也一并码了。至于Vue1.0嘛，用着让人脑壳疼就偷懒不码了。</p>
+<h1 id="Vue3-0-响应式原理解析-手写实现"><a href="#Vue3-0-响应式原理解析-手写实现" class="headerlink" title="Vue3.0 响应式原理解析+手写实现"></a>Vue3.0 响应式原理解析+手写实现</h1><h2 id="简单使用"><a href="#简单使用" class="headerlink" title="简单使用"></a>简单使用</h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"app"</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="undefined">		const App = &#123;</span></span><br><span class="line"><span class="undefined">			template: `&#123;&#123;count&#125;&#125;`,</span></span><br><span class="line"><span class="undefined">			data()&#123;</span></span><br><span class="line"><span class="undefined">				return &#123;</span></span><br><span class="line"><span class="undefined">					count: 1000</span></span><br><span class="line"><span class="undefined">				&#125;</span></span><br><span class="line"><span class="undefined">			&#125;</span></span><br><span class="line"><span class="undefined">		&#125;</span></span><br><span class="line"><span class="undefined">		let container = document.getElementById('app')</span></span><br><span class="line"><span class="undefined">		let proxy = Vue.createApp().mount(App, container)</span></span><br><span class="line"><span class="undefined">		setTimeout(()=&gt;&#123;</span></span><br><span class="line"><span class="undefined">			// 通过Proxy进行数据响应式变化</span></span><br><span class="line"><span class="undefined">			proxy.count = 2000</span></span><br><span class="line"><span class="undefined">		&#125;, 1000)</span></span><br><span class="line"><span class="undefined">	</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h2 id="核心基于proxy-Vue-reactive-将数据设为响应式"><a href="#核心基于proxy-Vue-reactive-将数据设为响应式" class="headerlink" title="核心基于proxy,Vue.reactive()将数据设为响应式"></a>核心基于proxy,Vue.reactive()将数据设为响应式</h2><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// es6 弱引用映射表：WeakMap WeakSet</span></span><br><span class="line"><span class="keyword">const</span> toProxy = <span class="keyword">new</span> <span class="built_in">WeakMap</span>(); <span class="comment">// 存放代理后的对象</span></span><br><span class="line"><span class="keyword">const</span> toRaw = <span class="keyword">new</span> <span class="built_in">WeakMap</span>(); <span class="comment">// 存放代理前的对象</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">trigger</span>(<span class="params">target,type,key</span>)</span>&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">'触发视图更新'</span>)</span><br><span class="line">	<span class="comment">// 数据一变，effect就执行</span></span><br><span class="line">	<span class="keyword">let</span> depsMap = targetsMap.get(traget)</span><br><span class="line">	<span class="keyword">if</span>(depsMap)&#123;</span><br><span class="line">		<span class="keyword">let</span> deps = depsMap.get(key)</span><br><span class="line">		<span class="keyword">if</span>(deps)&#123;</span><br><span class="line">			deps.forEach(<span class="function"><span class="params">effect</span>=&gt;</span>&#123;</span><br><span class="line">				effect()</span><br><span class="line">			&#125;)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">isObject</span>(<span class="params">target</span>)</span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">typeof</span> target === <span class="string">'object'</span> &amp;&amp; target !== <span class="literal">null</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//（栈：先进后出）</span></span><br><span class="line"><span class="keyword">let</span> activeEffectsStacks = [] <span class="comment">//栈型结果</span></span><br><span class="line"><span class="comment">// &#123;</span></span><br><span class="line"><span class="comment">// 	traget: &#123;</span></span><br><span class="line"><span class="comment">// 		key: [fn,fn]</span></span><br><span class="line"><span class="comment">// 	&#125;</span></span><br><span class="line"><span class="comment">// &#125;</span></span><br><span class="line"><span class="keyword">let</span> targetsMap = <span class="keyword">new</span> <span class="built_in">WeakMap</span>()</span><br><span class="line"><span class="comment">// 如果target中的key变化了，就执行数组里的方法</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">track</span>(<span class="params">traget,key</span>)</span>&#123;</span><br><span class="line">	<span class="keyword">let</span> effect = activeEffectsStacks[activeEffectsStacks.length<span class="number">-1</span>]</span><br><span class="line">	<span class="comment">// 有对应关系才创建关联</span></span><br><span class="line">	<span class="keyword">if</span>(effect)&#123;</span><br><span class="line">		<span class="keyword">let</span> depsMap = targetsMap.get(traget)</span><br><span class="line">		<span class="keyword">if</span>(!depsMap)&#123;</span><br><span class="line">			targetsMap.set(target.depsMap = <span class="keyword">new</span> <span class="built_in">Map</span>())</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">let</span> deps = depsMap.get(key)</span><br><span class="line">		<span class="keyword">if</span>(!deps)&#123;</span><br><span class="line">			depsMap.set(key.deps = <span class="keyword">new</span> <span class="built_in">Set</span>())</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span>(!deps.has(effect))&#123;</span><br><span class="line">			deps.add(effect)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 动态创建依赖关系</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 什么都不做</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 响应式副作用</span></span><br><span class="line"><span class="comment">// 当我们调用effect执行某个函数时，首先会执行一次这个函数。之后每次obj.name修改时，执行一次该函数</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">effect</span>(<span class="params">fn</span>)</span>&#123;</span><br><span class="line">	<span class="comment">// 需要把fn这个函数变成响应式的函数</span></span><br><span class="line">	<span class="keyword">let</span> effect = createReactiveEffect(fn)</span><br><span class="line">	effect() <span class="comment">// 默认要先执行一次</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createReactiveEffect</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	<span class="comment">// 创建响应式的effect</span></span><br><span class="line">	<span class="keyword">let</span> effect = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">		<span class="comment">// 运行：让fn执行，把effect存到栈中</span></span><br><span class="line">		<span class="keyword">return</span> run(effect,fn)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> effect</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 运行fn并把effect存起来</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">run</span>(<span class="params">effect, fn</span>)</span>&#123;</span><br><span class="line">	<span class="keyword">try</span>&#123;</span><br><span class="line">		activeEffectsStacks.push(effect)</span><br><span class="line">		fn() <span class="comment">// vue2.0是利用了js的单线程特性</span></span><br><span class="line">	&#125;<span class="keyword">finally</span>&#123;</span><br><span class="line">		activeEffectsStacks.pop(effect)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// target就是data中定义的所有变量， 即data()&#123;return &#123;&#125;&#125;中return的object</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">reactive</span>(<span class="params">target</span>)</span>&#123;</span><br><span class="line">	<span class="comment">// 不是对象的话就不用定义成响应式的了</span></span><br><span class="line">	<span class="keyword">if</span>(!isObject(target))&#123;</span><br><span class="line">		<span class="keyword">return</span> target;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 如果代理hashmap中已经存在了，就把这个结果返回</span></span><br><span class="line">	<span class="keyword">if</span>(toProxy.get(target))&#123;</span><br><span class="line">		<span class="keyword">return</span> toProxy.get(target)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 如果这个对象已经被代理了，就把它原封不动返回</span></span><br><span class="line">	<span class="keyword">if</span>(toRaw.get(target))&#123;</span><br><span class="line">		<span class="keyword">return</span> target</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">const</span> handlers = &#123;</span><br><span class="line">		<span class="comment">// target为原数据</span></span><br><span class="line">		set(target, key, value, receiver)&#123;</span><br><span class="line">		<span class="comment">// (以下注释代码为无effect时的版本)</span></span><br><span class="line">		<span class="comment">// 改变数组的时候，会触发两次set,第一个是根据所以改对应的值，第二个是改数组的length，期望第二次不要触发视图更新</span></span><br><span class="line">		<span class="comment">// if(target.hasOwnProperty(key))&#123;</span></span><br><span class="line">		<span class="comment">// 	trigger()</span></span><br><span class="line">		<span class="comment">// &#125;</span></span><br><span class="line">		<span class="comment">// 给某个变量设置某个值，返回操作成功与否的结果，普通的target[key]=value并不会有返回值,receiver可有可无</span></span><br><span class="line">		<span class="comment">// return Reflect.set(target, key, value, receiver)</span></span><br><span class="line"></span><br><span class="line">		<span class="comment">// 如何识别时改属性还是新增属性</span></span><br><span class="line">		<span class="keyword">let</span> hasKey = hasOwn(target,key) <span class="comment">// 判断这个属性以前有没有</span></span><br><span class="line">		<span class="keyword">let</span> oldValue = target[key]</span><br><span class="line">		<span class="keyword">let</span> result = <span class="built_in">Reflect</span>.set(target, key, value, receiver)</span><br><span class="line">		<span class="keyword">if</span>(!hasKey)&#123;</span><br><span class="line">			trigger(trigger,<span class="string">'add'</span>,key)</span><br><span class="line">		&#125;<span class="keyword">else</span> <span class="keyword">if</span>(oldValue !== value)&#123; <span class="comment">// 表示属性已经更改过了</span></span><br><span class="line">			trigger(target,<span class="string">'set'</span>,key)</span><br><span class="line">		&#125;<span class="comment">// 为了屏蔽无意义的修改</span></span><br><span class="line">		<span class="keyword">return</span> result</span><br><span class="line">		</span><br><span class="line">		&#125;,</span><br><span class="line">		get(target, key，receiver)&#123;</span><br><span class="line">			<span class="comment">// 等同于target[key]</span></span><br><span class="line">			 <span class="keyword">const</span> result = <span class="built_in">Reflect</span>.get(target, key，receiver)</span><br><span class="line">			 <span class="comment">// 收集依赖(订阅)，把当前的key和这个effect对应起来，如果key变化了重新让数组的effect执行即可</span></span><br><span class="line">			 track(target,key)</span><br><span class="line"></span><br><span class="line">			 <span class="comment">// 递归：如果取的值是个对象，就继续代理</span></span><br><span class="line">			 <span class="keyword">return</span> isObject(result)?reactive(result):result</span><br><span class="line">		&#125;,</span><br><span class="line">		deleteProperty(target, key)&#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="built_in">Reflect</span>.deleteProperty(target, key)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 更改target的某个属性后，会触发handlers的方法</span></span><br><span class="line">	<span class="keyword">let</span> observed = <span class="keyword">new</span> <span class="built_in">Proxy</span>(target, handlers)；</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 避免重复代理，利用缓存直接返回</span></span><br><span class="line">	toProxy.set(target, observed) <span class="comment">// reactive传入的是对象，原对象 ： 代理后的对象</span></span><br><span class="line">	toRaw.set(observed, target) <span class="comment">// reactive传入的是代理对象，代理后的对象 ： 原对象</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 返回代理后的对象</span></span><br><span class="line">	<span class="keyword">return</span> observed</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//调用</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> obj = &#123;</span><br><span class="line">	name: <span class="string">'abc'</span>,</span><br><span class="line">	test: [<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>]</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> p = reactive(obj)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 测试重复代理</span></span><br><span class="line"><span class="comment">// p = reactive(obj)</span></span><br><span class="line"><span class="comment">// p = reactive(p) </span></span><br><span class="line"></span><br><span class="line">p.name = <span class="string">'test'</span></span><br><span class="line">p.test.push(<span class="number">4</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 测试effect</span></span><br><span class="line"><span class="keyword">let</span> obj = reactive(&#123;<span class="attr">name</span>:<span class="string">'abc'</span>&#125;)</span><br><span class="line">effect(()=&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(obj.name)</span><br><span class="line">&#125;)</span><br><span class="line">obj.name = <span class="string">'test'</span></span><br></pre></td></tr></table></figure>
+<h2 id="vue3-0响应式原理架构图"><a href="#vue3-0响应式原理架构图" class="headerlink" title="vue3.0响应式原理架构图"></a>vue3.0响应式原理架构图</h2><p><img src="/images/vue3-org.png" alt=""></p>
+<h1 id="Vue2-0-响应式原理解析-手写实现"><a href="#Vue2-0-响应式原理解析-手写实现" class="headerlink" title="Vue2.0 响应式原理解析+手写实现"></a>Vue2.0 响应式原理解析+手写实现</h1><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 覆写数组的属性方法来达到数据响应</span></span><br><span class="line"><span class="keyword">let</span> oldArrayPrototype = <span class="built_in">Array</span>.oldArrayPrototype</span><br><span class="line"><span class="keyword">let</span> proto = <span class="built_in">Object</span>.create(oldArrayPrototype) <span class="comment">// 继承原有属性</span></span><br><span class="line"><span class="comment">// 函数劫持，把函数进行重写，内部继续调用老的方法，此处只列举其中三个方法</span></span><br><span class="line">[<span class="string">'push'</span>,<span class="string">'shif'</span>,<span class="string">'unshift'</span>].forEach(<span class="function"><span class="params">method</span>=&gt;</span>&#123;</span><br><span class="line">	proto[method] = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">		<span class="comment">// 在原方法的上新增 触发视图更新 的方法（切片编程）</span></span><br><span class="line">		trigger() </span><br><span class="line">		oldArrayPrototype[method].call(<span class="keyword">this</span>,...arguments)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">observer</span>(<span class="params">target</span>)</span>&#123;</span><br><span class="line">	<span class="keyword">if</span>(<span class="keyword">typeof</span> target !== <span class="string">'object'</span> || target == <span class="literal">null</span>)&#123;</span><br><span class="line">		<span class="keyword">return</span> target</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 拦截数组，给数组的方法进行重写</span></span><br><span class="line">	<span class="keyword">if</span>(<span class="built_in">Array</span>.isArray(target))&#123;</span><br><span class="line">		<span class="built_in">Object</span>.setPrototype(target,proto)  <span class="comment">// 写个循环，赋予给target</span></span><br><span class="line">		<span class="comment">// target.__proto__ = proto</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span>(<span class="keyword">let</span> key <span class="keyword">in</span> target)&#123;</span><br><span class="line">		defineReactive(target,key,target[key])</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果属性不存在，新增的属性还没执行过Object.defineProperty,所以不会刷新，所以才会有$set作为补充</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">defineReactive</span>(<span class="params">target, key, value</span>)</span>&#123;</span><br><span class="line">	<span class="comment">// 递归,继续拦截这个对象</span></span><br><span class="line">	observer(value)</span><br><span class="line">	<span class="comment">// 通过Object.defineProperty重新定义属性，给属性增加get,set</span></span><br><span class="line">	<span class="built_in">Object</span>.defineProperty(target,key,&#123;</span><br><span class="line">		<span class="comment">// 进行依赖收集</span></span><br><span class="line">		get()&#123;</span><br><span class="line">			<span class="keyword">return</span> value</span><br><span class="line">		&#125;,</span><br><span class="line">		set(newValue)&#123;</span><br><span class="line">			<span class="keyword">if</span>(newValue !== value)&#123;</span><br><span class="line">				trigger()</span><br><span class="line">				value = newValue</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">trigger</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(<span class="string">'更新视图'</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 调用</span></span><br><span class="line"><span class="keyword">let</span> data = &#123;<span class="attr">name</span>:<span class="string">'test'</span>,<span class="attr">age</span>:&#123;<span class="attr">n</span>:<span class="number">100</span>&#125;&#125;</span><br><span class="line">observer(data)</span><br><span class="line">data.age = &#123;<span class="attr">n</span>:<span class="number">200</span>&#125;</span><br><span class="line">data.age.n = <span class="number">300</span></span><br></pre></td></tr></table></figure>
+<h2 id="vue2-0响应式原理架构图"><a href="#vue2-0响应式原理架构图" class="headerlink" title="vue2.0响应式原理架构图"></a>vue2.0响应式原理架构图</h2><p><img src="/images/vue2-org.jpeg" alt=""></p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><blockquote>
+<ul>
+<li>vue2.0的响应式是采用数据劫持结合发布者-订阅者模式，通过Object.defineProperty来getter和setter,在数据变化的时候发布消息给订阅者，触发相应的视图更新。</li>
+<li>vue3.0的响应式是采用Proxy+Reflect反射的原理进行劫持getter和setter,数据变化触发代理对象的变化，发布消息给订阅者，然后触发相应的视图更新。</li>
+<li>在2.0中，响应式处理是默认递归的，一旦数据层级太深内存消耗会高，所以数据要尽量扁平化；数组改变length是无效的，而且对象不存在的属性不能被拦截，如果需要动态添加响应式属性，要使用Vue.set。</li>
+<li>在3.0中，响应式处理是经过判断后才递归，但是proxy的兼容性问题，IE11不兼容，这也意味着放弃兼容IE，3.0上实现就解决2.0中的以上问题。</li>
+<li>在2.0中数据的响应式处理和视图没有完全解耦，则在3.0中通过effect来实现解决。</li>
+</ul>
+</blockquote>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.avrils.cc/12/30/hello-world /">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Avril Li">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/logo.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Avril的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/12/30/hello-world /" itemprop="url">
+                  博客缘起 Why Blog
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-12-30T15:25:58+08:00">
+                2019-12-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Others/" itemprop="url" rel="index">
+                    <span itemprop="name">Others</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>自博客兴起之时就想着要写个自己的博客。看着人家名人发发博文，分享生活感悟，就想把自己写的那些诗文都发到博客上，也算是个念想、无奈自己是个极懒之人，也没什么耐心，估摸着自己开个博客也无心经营，遂放弃。直到大学毕业，自己入了程序猿这个坑，才把这个念想拾起。但苦于自己没什么水平，迟迟没有动手，直到现在。为什么现在想写博客了呢？写给自己。随着自己在程序猿这条路越走越远，遇到的一些问题和解决方案，总得记录下来，即使有些问题我已经心知肚明，但是也还是想把这些积累下来，帮助自己，说不定也能帮助到别人。同时，希望自己能写个中英文的博客，就当练练英文吧。至于，能不能坚持下来呢，随心吧。</p>
+<p>Since the rise of the blog, I wanna build a blog of mine. Why? Cause I found that celebrities write their blog to share life and sentiment, which is funny. So that I wanna post my poems and articles on the blog. But what a pretty lazy and no patience people of me, that I thought I cannot keep manamge the blog as time gone. So, abandon. Until graduated, pick up this mind when I jump down to the developer career. Cause I known I have nothing deserve to write on the blog, haven’t do it yet. But why blog now? For myself. As my job of developer, so many problems and confuse worth to mark it, even some of them had keep in my mind. I hope these can help me, maybe some one else. At the same time, I hope that I can write a blog with Chinese and English for my English practice. As for, whether it can hold on just depends on my mood.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Console.log(<span class="string">"Welcome to Avril's Blog."</span>);</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://www.avrils.cc/10/11/simple-release/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -713,7 +1015,7 @@
         
           
             <p>前段时间听了点课，结合自己的理解把关于手写简单的vue-router做个笔记吧。不废话了，上代码。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 用于获取当前Vue</span></span><br><span class="line"><span class="keyword">let</span> Vue</span><br><span class="line"></span><br><span class="line"><span class="comment">// 1. 声明VueRouter类</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">（PS：函数声明会提升，类声明不会。</span></span><br><span class="line"><span class="comment">要先声明你的类，然后才能访问它，否则会抛出ReferenceError）</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Router</span> </span>&#123;</span><br><span class="line">  <span class="keyword">constructor</span>(&#123; routes &#125;) &#123;</span><br><span class="line">    <span class="comment">// 7. 映射路由表</span></span><br><span class="line">    <span class="keyword">this</span>.routeMap = routes.reduce(<span class="function">(<span class="params">memo, route</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="comment">// 把path作为key，组件为value</span></span><br><span class="line">      memo[route.path] = route.component</span><br><span class="line">      <span class="keyword">return</span> memo</span><br><span class="line">    &#125;, &#123;&#125;)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 9. 把当前路径属性定义成响应式数据，视图才刷新</span></span><br><span class="line">    <span class="comment">// 或Vue.util.defineReactive(this.route = &#123;&#125;, 'path', '/')</span></span><br><span class="line">    <span class="comment">// 也可以用Vue.$set但是内部源码里用的是这个</span></span><br><span class="line">    Vue.util.defineReactive(<span class="keyword">this</span>, <span class="string">'route'</span>, &#123; <span class="attr">path</span>: <span class="string">'/'</span> &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 10. 页面加载的时候跳转（这里只处理hash的跳转）</span></span><br><span class="line">    <span class="built_in">window</span>.addEventListener(<span class="string">'load'</span>, () =&gt; &#123;</span><br><span class="line">      <span class="comment">// 页面加载的时候，默认跳转到首页</span></span><br><span class="line">      location.hash ? <span class="string">''</span> : location.hash = <span class="string">'/'</span></span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="comment">// hash更新</span></span><br><span class="line">    <span class="built_in">window</span>.addEventListener(<span class="string">'hashchange'</span>, () =&gt; &#123;</span><br><span class="line">      <span class="comment">// 跳转到对应路由，把#去掉</span></span><br><span class="line">      <span class="keyword">this</span>.route.path = location.hash.slice(<span class="number">1</span>)</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 提供一个install方法来全局注册该组件（对应Vue.use()）</span></span><br><span class="line"><span class="comment">// 可以扩展属性/组件/指令</span></span><br><span class="line">Router.install = <span class="function"><span class="keyword">function</span>(<span class="params">_Vue</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// _Vue是当前Vue的构造函数</span></span><br><span class="line">  Vue = _Vue</span><br><span class="line">  <span class="comment">// 3. 在beforeCreate的时候把router的定义mixin到所有的Vue实例</span></span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">  （PS: 让每个组件都能共享router实例，可以Vue.prototype.router，</span></span><br><span class="line"><span class="comment">  但是这样就每个new Vue都会有这个属性，</span></span><br><span class="line"><span class="comment">  实际上我们只需要main.js/App.vue开始的才拥有，所以要给每个组件单独添加router）</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  Vue.mixin(&#123;</span><br><span class="line">    beforeCreate() &#123;</span><br><span class="line">      <span class="comment">// 4. 先找根组件，再一层层往下</span></span><br><span class="line">      <span class="comment">// 确保只有配置了router的Vue实例根节点及其子孙节点才有对应的router</span></span><br><span class="line">      <span class="comment">// this.$options即new Vue(&#123;...router&#125;), 只有根组件才会传这个对象</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">this</span>.$options &amp;&amp; <span class="keyword">this</span>.$options.router) &#123;</span><br><span class="line">        <span class="comment">// 保存当前的router</span></span><br><span class="line">        <span class="keyword">this</span>._router = <span class="keyword">this</span>.$options.router</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 让所有的子组件都有_router属性指向当前的router(即传进来的new Router实例)</span></span><br><span class="line">        <span class="comment">// 若Router中有属性p，则可获取到this._router.p的值</span></span><br><span class="line">        <span class="keyword">this</span>._router = <span class="keyword">this</span>.$parent &amp;&amp; <span class="keyword">this</span>.$parent._router</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 5. 给每个组件添加$route和$routers属性，即_router</span></span><br><span class="line">      <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'$route'</span>, &#123;</span><br><span class="line">        value: &#123;</span><br><span class="line">          route: <span class="keyword">this</span>._router.route</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;)</span><br><span class="line">      <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'$router'</span>, &#123;</span><br><span class="line">        value: &#123;</span><br><span class="line">          route: <span class="keyword">this</span>._router.route</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 6. 定义路由两大组件&lt;router-link&gt;和&lt;router-view&gt;</span></span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">  (PS：如果放进mixin里面，会重复定义，但是vue会判断，所以也不会影响，但最好是各司其职)</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  Vue.component(<span class="string">'router-link'</span>, &#123;</span><br><span class="line">    props: &#123;</span><br><span class="line">      to: &#123;</span><br><span class="line">        type: <span class="built_in">String</span>,</span><br><span class="line">        <span class="keyword">default</span>: <span class="string">'/'</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    render(h) &#123;</span><br><span class="line">      <span class="comment">// 获取router-link,实际就是个a标签</span></span><br><span class="line">      <span class="comment">// PS：此处目前只处理了hash类型的路由分配所以是#</span></span><br><span class="line">      <span class="comment">// this.$slots.default 即默认的标签的内容</span></span><br><span class="line">      <span class="keyword">return</span> <span class="xml"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">&#123;</span>`#$&#123;<span class="attr">this.to</span>&#125;`&#125;&gt;</span>&#123;this.$slots.default&#125;<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 8. 显示对应的组件</span></span><br><span class="line">  Vue.component(<span class="string">'router-view'</span>, &#123;</span><br><span class="line">    render(h) &#123;</span><br><span class="line">      <span class="comment">// 根据路由表里的组件路径，渲染组件</span></span><br><span class="line">      <span class="keyword">return</span> h(<span class="keyword">this</span>._router.routeMap[<span class="keyword">this</span>.$route.route.path])</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 把这个组件类导出，在router.js中引用</span></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> Router</span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 用于获取当前Vue</span></span><br><span class="line"><span class="keyword">let</span> Vue</span><br><span class="line"></span><br><span class="line"><span class="comment">// 1. 声明VueRouter类</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">（PS：函数声明会提升，类声明不会。</span></span><br><span class="line"><span class="comment">要先声明你的类，然后才能访问它，否则会抛出ReferenceError）</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Router</span> </span>&#123;</span><br><span class="line">  <span class="keyword">constructor</span>(&#123; routes &#125;) &#123;</span><br><span class="line">    <span class="comment">// 7. 映射路由表</span></span><br><span class="line">    <span class="keyword">this</span>.routeMap = routes.reduce(<span class="function">(<span class="params">memo, route</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="comment">// 把path作为key，组件为value</span></span><br><span class="line">      memo[route.path] = route.component</span><br><span class="line">      <span class="keyword">return</span> memo</span><br><span class="line">    &#125;, &#123;&#125;)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 9. 把当前路径属性定义成响应式数据，视图才刷新</span></span><br><span class="line">    <span class="comment">// 或Vue.util.defineReactive(this.route = &#123;&#125;, 'path', '/')</span></span><br><span class="line">    <span class="comment">// 也可以用Vue.$set但是内部源码里用的是这个</span></span><br><span class="line">    Vue.util.defineReactive(<span class="keyword">this</span>, <span class="string">'route'</span>, &#123; <span class="attr">path</span>: <span class="string">'/'</span> &#125;)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 10. 页面加载的时候跳转（这里只处理hash的跳转）</span></span><br><span class="line">    <span class="built_in">window</span>.addEventListener(<span class="string">'load'</span>, () =&gt; &#123;</span><br><span class="line">      <span class="comment">// 页面加载的时候，默认跳转到首页</span></span><br><span class="line">      location.hash ? <span class="string">''</span> : location.hash = <span class="string">'/'</span></span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="comment">// hash更新</span></span><br><span class="line">    <span class="built_in">window</span>.addEventListener(<span class="string">'hashchange'</span>, () =&gt; &#123;</span><br><span class="line">      <span class="comment">// 跳转到对应路由，把#去掉</span></span><br><span class="line">      <span class="keyword">this</span>.route.path = location.hash.slice(<span class="number">1</span>)</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 提供一个install方法来全局注册该组件（对应Vue.use()）</span></span><br><span class="line"><span class="comment">// 可以扩展属性/组件/指令</span></span><br><span class="line">Router.install = <span class="function"><span class="keyword">function</span>(<span class="params">_Vue</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// _Vue是当前Vue的构造函数</span></span><br><span class="line">  Vue = _Vue</span><br><span class="line">  <span class="comment">// 3. 在beforeCreate的时候把router的定义mixin到所有的Vue实例</span></span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">  （PS: 让每个组件都能共享router实例，可以Vue.prototype.router，</span></span><br><span class="line"><span class="comment">  但是这样就每个new Vue都会有这个属性，</span></span><br><span class="line"><span class="comment">  实际上我们只需要main.js/App.vue开始的才拥有，所以要给每个组件单独添加router）</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  Vue.mixin(&#123;</span><br><span class="line">    beforeCreate() &#123;</span><br><span class="line">      <span class="comment">// 4. 先找根组件，再一层层往下</span></span><br><span class="line">      <span class="comment">// 确保只有配置了router的Vue实例根节点及其子孙节点才有对应的router</span></span><br><span class="line">      <span class="comment">// this.$options即new Vue(&#123;...router&#125;), 只有根组件才会传这个对象</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">this</span>.$options &amp;&amp; <span class="keyword">this</span>.$options.router) &#123;</span><br><span class="line">        <span class="comment">// 保存当前的router</span></span><br><span class="line">        <span class="keyword">this</span>._router = <span class="keyword">this</span>.$options.router</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 让所有的子组件都有_router属性指向当前的router(即传进来的new Router实例)</span></span><br><span class="line">        <span class="comment">// 若Router中有属性p，则可获取到this._router.p的值</span></span><br><span class="line">        <span class="keyword">this</span>._router = <span class="keyword">this</span>.$parent &amp;&amp; <span class="keyword">this</span>.$parent._router</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 5. 给每个组件添加$route和$routers属性，即_router</span></span><br><span class="line">      <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'$route'</span>, &#123;</span><br><span class="line">        value: &#123;</span><br><span class="line">          route: <span class="keyword">this</span>._router.route</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;)</span><br><span class="line">      <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'$router'</span>, &#123;</span><br><span class="line">        value: &#123;</span><br><span class="line">          route: <span class="keyword">this</span>._router.route</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 6. 定义路由两大组件&lt;router-link&gt;和&lt;router-view&gt;</span></span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">  (PS：如果放进mixin里面，会重复定义，但是vue会判断，所以也不会影响，但最好是各司其职)</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  Vue.component(<span class="string">'router-link'</span>, &#123;</span><br><span class="line">    props: &#123;</span><br><span class="line">      to: &#123;</span><br><span class="line">        type: <span class="built_in">String</span>,</span><br><span class="line">        <span class="keyword">default</span>: <span class="string">'/'</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    render(h) &#123;</span><br><span class="line">      <span class="comment">// 获取router-link,实际就是个a标签</span></span><br><span class="line">      <span class="comment">// PS：此处目前只处理了hash类型的路由分配所以是#</span></span><br><span class="line">      <span class="comment">// this.$slots.default 即默认的标签的内容</span></span><br><span class="line">      <span class="keyword">return</span> &lt;a href=&#123;`#$&#123;this.to&#125;`&#125;&gt;&#123;this.$slots.default&#125;&lt;/a&gt;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 8. 显示对应的组件</span></span><br><span class="line">  Vue.component(<span class="string">'router-view'</span>, &#123;</span><br><span class="line">    render(h) &#123;</span><br><span class="line">      <span class="comment">// 根据路由表里的组件路径，渲染组件</span></span><br><span class="line">      <span class="keyword">return</span> h(<span class="keyword">this</span>._router.routeMap[<span class="keyword">this</span>.$route.route.path])</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 把这个组件类导出，在router.js中引用</span></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> Router</span><br></pre></td></tr></table></figure>
 <p>Router层级关系图：<br><img src="/images/vue-router.png" alt=""></p>
 
           
@@ -1208,151 +1510,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope="" itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="http://www.avrils.cc/04/14/hello-world /">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Avril Li">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/logo.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Avril的博客">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/04/14/hello-world /" itemprop="url">
-                  博客缘起 Why Blog
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-04-14T11:39:39+08:00">
-                2018-04-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Others/" itemprop="url" rel="index">
-                    <span itemprop="name">Others</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>自博客兴起之时就想着要写个自己的博客。看着人家名人发发博文，分享生活感悟，就想把自己写的那些诗文都发到博客上，也算是个念想、无奈自己是个极懒之人，也没什么耐心，估摸着自己开个博客也无心经营，遂放弃。直到大学毕业，自己入了程序猿这个坑，才把这个念想拾起。但苦于自己没什么水平，迟迟没有动手，直到现在。为什么现在想写博客了呢？写给自己。随着自己在程序猿这条路越走越远，遇到的一些问题和解决方案，总得记录下来，即使有些问题我已经心知肚明，但是也还是想把这些积累下来，帮助自己，说不定也能帮助到别人。同时，希望自己能写个中英文的博客，就当练练英文吧。至于，能不能坚持下来呢，随心吧。</p>
-<p>Since the rise of the blog, I wanna build a blog of mine. Why? Cause I found that celebrities write their blog to share life and sentiment, which is funny. So that I wanna post my poems and articles on the blog. But what a pretty lazy and no patience people of me, that I thought I cannot keep manamge the blog as time gone. So, abandon. Until graduated, pick up this mind when I jump down to the developer career. Cause I known I have nothing deserve to write on the blog, haven’t do it yet. But why blog now? For myself. As my job of developer, so many problems and confuse worth to mark it, even some of them had keep in my mind. I hope these can help me, maybe some one else. At the same time, I hope that I can write a blog with Chinese and English for my English practice. As for, whether it can hold on just depends on my mood.</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Console.log(<span class="string">"Welcome to Avril's Blog."</span>);</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1396,7 +1553,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives/">
-                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-count">7</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1460,7 +1617,7 @@
         <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2019</span>
+  <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
